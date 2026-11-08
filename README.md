@@ -1,31 +1,39 @@
-# Travel Itinerary Crew
+# GoldenTravels: Multi-Agent Trip Planner
 
-A hierarchical CrewAI setup: a Manager agent delegates to a Researcher,
-Local Expert, and Logistics Planner, then a Writer agent turns all of it
-into a final day-by-day itinerary.
+A personal project (September 2026) for planning trips with a team of AI agents. Built with CrewAI and Claude to explore hierarchical multi-agent orchestration, where a manager agent decides who does what instead of following a fixed pipeline.
 
-## Setup
+## How it works
+
+| Agent | Role |
+| --- | --- |
+| Trip Planning Manager | Coordinates the specialists, and re-delegates or asks for revisions when an output falls short |
+| Destination Researcher | Neighbourhoods to base in, seasonal considerations and the overall shape of the trip |
+| Local Expert | Specific restaurants, activities and experiences that match the trip style |
+| Logistics Planner | Day-by-day sequencing with travel times, opening hours and realistic pacing |
+| Itinerary Writer | Combines everything into the final day-by-day itinerary |
+
+**Input:** destinations, dates and a trip style.
+**Output:** a markdown itinerary with named stops, rough timings and a short reason for each choice.
+
+A hierarchical process is slower and uses more tokens than a sequential one, but it lets the manager catch weak outputs before they reach the final itinerary.
+
+## Stack
+
+- Python and CrewAI (hierarchical process)
+- Claude via the Anthropic API, powering every agent
+- Serper web search (optional) for up-to-date information
+
+## Running it
 
 ```bash
-cd travel_crew
 python -m venv venv
 source venv/bin/activate      # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env
-```
-
-Fill in `.env`:
-- `ANTHROPIC_API_KEY` — required, powers every agent
-- `SERPER_API_KEY` — optional, gives agents real web search (free tier at serper.dev). Without it, agents reason from the model's own knowledge only — fine for a first test, not for anything current (prices, hours, current openings).
-
-## Run
-
-```bash
+cp .env.example .env          # ANTHROPIC_API_KEY, plus SERPER_API_KEY for live search
 python main.py
 ```
 
-It defaults to a test run for your London–Barcelona–Amalfi trip. To
-change the trip, edit the `inputs` dict at the bottom of `main.py`:
+Trip details live in the `inputs` dict at the bottom of `main.py`, for example:
 
 ```python
 inputs = {
@@ -35,27 +43,16 @@ inputs = {
 }
 ```
 
-## How the hierarchy works
+Without a Serper key, the agents rely on the model's own knowledge, so prices, opening hours and new openings may be out of date.
 
-Unlike a fixed sequential pipeline, the **Manager agent** decides at
-runtime how to route work between the Researcher, Local Expert, and
-Logistics Planner — it can re-delegate or ask for revisions if an
-output isn't good enough before handing off to the Writer. This is
-slower and more token-hungry than sequential, but closer to genuine
-multi-agent coordination.
+## Current scope
 
-## What's deliberately left out of v1
+- No booking or live pricing for flights and hotels
+- Trip style is passed in as plain text for each run
+- Itineraries print to the console and aren't saved
 
-- No booking/live-price integration (flights, hotels)
-- No pull from your actual travel-planning-standards — trip style is
-  passed in per-run as a plain string for now
-- No persistence — each run is a fresh itinerary, nothing is saved
+## Ideas for later
 
-## Natural next steps
-
-1. Swap `SerperDevTool` for Google Places API to reuse your existing
-   First Sip key and get richer local data
-2. Feed your travel-planning-standards doc into `trip_style` or as a
-   system-level addition to the Writer agent's backstory
-3. Add a simple output step that saves the itinerary to a markdown
-   file per trip
+- Google Places API for richer local data
+- A saved set of personal travel preferences for the Writer agent
+- Saving each itinerary to its own markdown file
